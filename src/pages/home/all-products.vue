@@ -77,6 +77,9 @@ import n3Image from '../../static/images/n3.png';
 import p1Image from '../../static/images/p1.png';
 import p2Image from '../../static/images/p2.png';
 import p3Image from '../../static/images/p3.png';
+// 添加p4和p5图片导入，但实际使用p3的图片资源
+const p4Image = p3Image;
+const p5Image = p3Image;
 
 // 搜索相关
 const searchKeyword = ref('');
@@ -117,7 +120,7 @@ const allProducts = ref([
     title: '农用环保杀虫剂',
     tag: '植物保护',
     price: '88.00',
-    image: p2Image,
+    image: p4Image,
     description: '安全环保配方，有效防治多种农作物害虫，对人畜安全。'
   },
   {
@@ -125,7 +128,7 @@ const allProducts = ref([
     title: '太阳能灭虫灯',
     tag: '植物保护',
     price: '128.00',
-    image: p1Image,
+    image: p5Image,
     description: '太阳能供电，自动诱捕害虫，节能环保，无需接电源。'
   },
   {

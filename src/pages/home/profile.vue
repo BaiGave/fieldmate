@@ -108,6 +108,45 @@
 				<view class="item-label">消息通知</view>
 				<view class="item-arrow"></view>
 			</view>
+			
+			<view class="profile-item api-mode-item" :class="{'editing': state.apiModeEdit.isEditing}">
+				<view class="item-label" :class="{'editing-label': state.apiModeEdit.isEditing}">API接口模式</view>
+				
+				<view v-if="!state.apiModeEdit.isEditing" class="item-value">
+					{{ state.apiModeEdit.currentMode === 'mock' ? '模拟接口' : '真实接口' }}
+				</view>
+				
+				<view v-if="state.apiModeEdit.isEditing" class="item-edit">
+					<view class="edit-content">
+						<view class="api-mode-select">
+							<view 
+								class="mode-option" 
+								:class="{'selected': state.apiModeEdit.value === 'mock'}"
+								@click="state.apiModeEdit.value = 'mock'"
+							>
+								模拟接口
+							</view>
+							<view 
+								class="mode-option" 
+								:class="{'selected': state.apiModeEdit.value === 'real'}"
+								@click="state.apiModeEdit.value = 'real'"
+							>
+								真实接口
+							</view>
+						</view>
+					</view>
+					<view class="edit-actions">
+						<view class="save-button" @click="saveApiMode" hover-class="button-hover">
+							保存
+						</view>
+						<view class="cancel-button" @click="cancelApiModeEdit" hover-class="button-hover">
+							取消
+						</view>
+					</view>
+				</view>
+				
+				<view v-if="!state.apiModeEdit.isEditing" class="item-arrow" @click="editApiMode"></view>
+			</view>
 		</view>
 		
 		<view class="modify-password-button" @click="goToPasswordManagement">
@@ -157,6 +196,11 @@ export default {
 				isEditing: false,
 				value: 0
 			},
+			apiModeEdit: {
+				isEditing: false,
+				value: 'mock',
+				currentMode: 'mock'
+			},
 			isLoading: true,
 			showLogoutConfirm: false
 		});
@@ -172,6 +216,17 @@ export default {
 			state.isLoading = true;
 			
 			try {
+				// 获取当前API模式
+				try {
+					state.apiModeEdit.currentMode = api.getApiMode();
+					state.apiModeEdit.value = state.apiModeEdit.currentMode;
+				} catch (e) {
+					console.error('获取API模式失败:', e);
+					// 默认使用模拟模式
+					state.apiModeEdit.currentMode = 'mock';
+					state.apiModeEdit.value = 'mock';
+				}
+				
 				// 优先从userInfo获取用户信息
 				let userInfo = uni.getStorageSync('userInfo');
 				let userData = {};
@@ -558,6 +613,89 @@ export default {
 			});
 		};
 
+		// 编辑API接口模式
+		const editApiMode = () => {
+			state.apiModeEdit.isEditing = true;
+		};
+
+		// 保存API接口模式
+		const saveApiMode = async () => {
+			// 验证输入
+			if (!state.apiModeEdit.value) {
+				uni.showToast({
+					title: '请选择API接口模式',
+					icon: 'none'
+				});
+				return;
+			}
+
+			try {
+				// 使用本地API更新API接口模式
+				const result = await api.updateApiMode({
+					mode: state.apiModeEdit.value
+				});
+
+				if (result.success) {
+					// 更新本地状态
+					state.apiModeEdit.currentMode = state.apiModeEdit.value;
+					state.apiModeEdit.isEditing = false;
+					
+					// 触发全局事件，通知主页更新API接口模式
+					uni.$emit('apiModeUpdated', {
+						mode: state.apiModeEdit.currentMode
+					});
+					
+					// 同时更新userInfo中的API接口模式
+					try {
+						const userInfo = uni.getStorageSync('userInfo');
+						if (userInfo) {
+							userInfo.apiMode = state.apiModeEdit.currentMode;
+							uni.setStorageSync('userInfo', userInfo);
+						}
+					} catch (e) {
+						console.error('更新userInfo失败:', e);
+					}
+					
+					uni.showToast({
+						title: '保存成功',
+						icon: 'success'
+					});
+				} else {
+					uni.showToast({
+						title: result.message || '保存失败',
+						icon: 'none'
+					});
+				}
+			} catch (error) {
+				console.error('保存API接口模式失败:', error);
+				
+				// 本地模式下直接更新
+				state.apiModeEdit.currentMode = state.apiModeEdit.value;
+				state.apiModeEdit.isEditing = false;
+				
+				// 更新本地存储
+				try {
+					const userInfo = uni.getStorageSync('userInfo');
+					if (userInfo) {
+						userInfo.apiMode = state.apiModeEdit.currentMode;
+						uni.setStorageSync('userInfo', userInfo);
+					}
+				} catch (e) {
+					console.error('更新userInfo失败:', e);
+				}
+				
+				uni.showToast({
+					title: '保存成功',
+					icon: 'success'
+				});
+			}
+		};
+
+		// 取消编辑API接口模式
+		const cancelApiModeEdit = () => {
+			state.apiModeEdit.isEditing = false;
+		};
+
 		// 组件挂载时加载用户数据
 		onMounted(() => {
 			// 显示加载动画
@@ -628,7 +766,10 @@ export default {
 			logout,
 			confirmLogout,
 			cancelLogout,
-			goToNotifications
+			goToNotifications,
+			editApiMode,
+			saveApiMode,
+			cancelApiModeEdit
 		};
 	}
 };
@@ -1149,5 +1290,39 @@ export default {
 	margin-bottom: 20rpx;
 	font-size: 32rpx;
 	font-weight: bold;
+}
+
+.api-mode-item {
+	transition: all 0.3s ease;
+}
+
+.api-mode-select {
+	display: flex;
+	flex-direction: row;
+	width: 100%;
+	margin-top: 20rpx;
+	margin-bottom: 20rpx;
+}
+
+.mode-option {
+	flex: 1;
+	text-align: center;
+	padding: 20rpx 0;
+	background-color: #f0f0f0;
+	margin: 0 10rpx;
+	border-radius: 10rpx;
+	font-size: 28rpx;
+	color: #666;
+	transition: all 0.3s ease;
+}
+
+.mode-option.selected {
+	background-color: #42b872;
+	color: #fff;
+	box-shadow: 0 4rpx 8rpx rgba(66, 184, 114, 0.2);
+}
+
+.mode-option:active {
+	opacity: 0.7;
 }
 </style> 

@@ -64,25 +64,75 @@ const historyList = ref([]);
 const animationData = reactive([]);
 const emptyAnimationData = ref(null);
 
-// 页面加载时获取历史记录
-onMounted(() => {
-	loadHistory();
-	
-	// 延迟执行动画，确保页面已渲染
-	setTimeout(() => {
-		playEmptyAnimation();
-		playListAnimation();
-	}, 100);
-});
+// 获取历史记录
+const getHistory = () => {
+	try {
+		console.log('开始获取分析历史记录');
+		const history = getAnalysisHistory();
+		console.log('从storage获取到的历史记录:', history);
+		
+		// 如果历史记录为空，尝试创建一个模拟记录
+		if (history.length === 0) {
+			console.log('历史记录为空，创建模拟记录');
+			createMockRecord();
+			return getAnalysisHistory();
+		}
+		
+		return history;
+	} catch (error) {
+		console.error('获取历史记录失败:', error);
+		uni.showToast({
+			title: '获取历史记录失败',
+			icon: 'none'
+		});
+		
+		return [];
+	}
+};
 
-// 加载历史记录
-const loadHistory = () => {
-	historyList.value = getAnalysisHistory();
-	// 初始化动画数据数组
-	historyList.value.forEach(() => {
-		animationData.push(null);
+// 创建模拟记录用于测试
+const createMockRecord = () => {
+	console.log('创建模拟历史记录');
+	const mockRecord = {
+		imagePath: '/static/images/crops/rice.jpg',
+		analysisTime: new Date().toLocaleString(),
+		cropType: '水稻',
+		growthStage: '抽穗期',
+		healthStatus: '健康',
+		analysisDetail: '经AI分析，当前水稻处于抽穗期，整体生长状况良好，叶色浓绿，长势均匀，未发现明显病虫害迹象。',
+		suggestions: [
+			'继续保持现有管理方式',
+			'注意控制水分，保持稻田浅水层',
+			'预计20天后可以收获'
+		]
+	};
+	
+	saveAnalysisHistory(mockRecord);
+	console.log('模拟记录已创建');
+	
+	// 显示提示
+	uni.showToast({
+		title: '已创建模拟记录',
+		icon: 'none'
 	});
 };
+
+// 初始化
+onMounted(() => {
+	console.log('分析历史页面加载');
+	
+	// 尝试获取历史记录
+	historyList.value = getHistory();
+	
+	// 如果历史记录为空，显示创建模拟记录的按钮
+	if (historyList.value.length === 0) {
+		console.log('历史记录为空，将显示空状态');
+	} else {
+		console.log(`获取到${historyList.value.length}条历史记录`);
+		// 初始化动画数据
+		initAnimations();
+	}
+});
 
 // 返回上一页
 const goBack = () => {
@@ -179,6 +229,17 @@ const playEmptyAnimation = () => {
 	
 	animation.opacity(1).translateY(0).step();
 	emptyAnimationData.value = animation.export();
+};
+
+// 初始化动画数据
+const initAnimations = () => {
+	// 初始化动画数据数组
+	historyList.value.forEach(() => {
+		animationData.push(null);
+	});
+	
+	// 播放列表动画
+	playListAnimation();
 };
 </script>
 

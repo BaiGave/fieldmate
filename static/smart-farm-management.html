@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧农业数据监控平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        
+        body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background: url('../static/images/b1.png') no-repeat center center;
+            background-size: cover;
+            position: relative;
+            color: #fff;
+        }
+        
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 10, 20, 0.7);
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 顶部标题栏 */
+        .header {
+            height: 60px;
+            background: linear-gradient(90deg, rgba(0,40,80,0.8) 0%, rgba(0,80,120,0.8) 50%, rgba(0,40,80,0.8) 100%);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            border-bottom: 1px solid rgba(0, 180, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 150, 255, 0.5);
+        }
+        
+        .title {
+            font-size: 24px;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(0, 150, 255, 0.8);
+            display: flex;
+            align-items: center;
+        }
+        
+        .title::before {
+            content: "";
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background: rgba(0, 180, 255, 0.8);
+            margin-right: 10px;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 150, 255, 0.8);
+        }
+        
+        .nav {
+            display: flex;
+        }
+        
+        .nav-item {
+            padding: 8px 15px;
+            margin: 0 5px;
+            background: rgba(0, 60, 100, 0.5);
+            border: 1px solid rgba(0, 150, 200, 0.5);
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: rgba(0, 120, 200, 0.5);
+            box-shadow: 0 0 15px rgba(0, 150, 255, 0.5);
+        }
+        
+        /* 主体内容区 */
+        .content {
+            flex: 1;
+            display: flex;
+            padding: 15px;
+            gap: 15px;
+        }
+        
+        /* 左侧数据面板 */
+        .left-panel {
+            width: 25%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        /* 中间地图区域 */
+        .center-panel {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 20, 40, 0.4);
+            border: 1px solid rgba(0, 150, 200, 0.3);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        /* 右侧数据面板 */
+        .right-panel {
+            width: 25%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        /* 数据卡片共用样式 */
+        .data-card {
+            background: rgba(0, 30, 60, 0.6);
+            border: 1px solid rgba(0, 150, 200, 0.3);
+            border-radius: 5px;
+            padding: 15px;
+            box-shadow: 0 0 15px rgba(0, 50, 100, 0.5);
+        }
+        
+        .card-title {
+            font-size: 16px;
+            color: #0bf;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(0, 150, 200, 0.3);
+        }
+        
+        .card-title::before {
+            content: "";
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: rgba(0, 180, 255, 0.8);
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+        
+        /* 圆环图表区域 */
+        .circle-charts {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        
+        .circle-chart {
+            position: relative;
+            width: 30%;
+            text-align: center;
+        }
+        
+        .chart-bg {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: conic-gradient(
+                rgba(0, 180, 255, 0.8) 0% 30%, 
+                rgba(0, 50, 80, 0.5) 30% 100%
+            );
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .chart-bg::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 30, 60, 0.8);
+            border-radius: 50%;
+        }
+        
+        .chart-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 16px;
+            font-weight: bold;
+            color: #0bf;
+        }
+        
+        .chart-label {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #aaa;
+        }
+        
+        .chart-unit {
+            font-size: 10px;
+            color: #0bf;
+            opacity: 0.8;
+        }
+        
+        /* 柱状图 */
+        .bar-chart {
+            height: 150px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            padding-top: 20px;
+        }
+        
+        .bar {
+            width: 12%;
+            background: linear-gradient(to top, rgba(0, 180, 255, 0.8), rgba(0, 100, 180, 0.4));
+            position: relative;
+            border-radius: 2px 2px 0 0;
+            transition: height 0.5s;
+        }
+        
+        .bar::before {
+            content: attr(data-value);
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #0bf;
+        }
+        
+        .bar::after {
+            content: attr(data-label);
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #aaa;
+        }
+        
+        /* 农田区域 */
+        .farm-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .farm-map {
+            width: 90%;
+            height: 90%;
+            background: rgba(0, 30, 50, 0.6);
+            border: 1px solid rgba(0, 120, 180, 0.4);
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 15px;
+            padding: 15px;
+        }
+        
+        .farm-plot {
+            position: relative;
+            background: rgba(0, 60, 100, 0.4);
+            border: 1px solid rgba(0, 150, 200, 0.3);
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .farm-plot:hover {
+            background: rgba(0, 100, 150, 0.5);
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .plot-id {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 14px;
+            color: #0bf;
+            font-weight: bold;
+        }
+        
+        .plot-name {
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #fff;
+            text-align: center;
+            padding-top: 10px;
+        }
+        
+        .plot-status {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #aaa;
+        }
+        
+        .plot-data {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+        
+        .plot-data-icon {
+            width: 12px;
+            height: 12px;
+            background: rgba(0, 180, 255, 0.6);
+            border-radius: 2px;
+            margin-right: 5px;
+        }
+        
+        .plot-data-value {
+            font-size: 12px;
+            color: #0bf;
+        }
+        
+        /* 环境监测 */
+        .environment {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .env-item {
+            background: rgba(0, 40, 70, 0.6);
+            border-radius: 4px;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .env-icon {
+            width: 24px;
+            height: 24px;
+            background: rgba(0, 150, 220, 0.3);
+            border-radius: 3px;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        
+        .env-data {
+            flex: 1;
+        }
+        
+        .env-label {
+            font-size: 12px;
+            color: #aaa;
+        }
+        
+        .env-value {
+            font-size: 16px;
+            color: #0bf;
+            font-weight: bold;
+        }
+        
+        /* 底部控制栏 */
+        .footer {
+            height: 50px;
+            background: rgba(0, 30, 60, 0.8);
+            border-top: 1px solid rgba(0, 150, 200, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+        
+        .status {
+            font-size: 12px;
+            color: #aaa;
+        }
+        
+        .status-success {
+            color: #5f5;
+        }
+        
+        .controls {
+            display: flex;
+        }
+        
+        .control-btn {
+            padding: 6px 12px;
+            margin: 0 5px;
+            background: rgba(0, 80, 150, 0.5);
+            border: 1px solid rgba(0, 150, 200, 0.5);
+            border-radius: 3px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .control-btn:hover {
+            background: rgba(0, 120, 200, 0.6);
+            box-shadow: 0 0 10px rgba(0, 150, 255, 0.5);
+        }
+        
+        /* 实时数据更新动画 */
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .real-time-update {
+            animation: blink 2s infinite;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .left-panel, .right-panel {
+                width: 100%;
+                max-height: 300px;
+                flex-direction: row;
+            }
+            
+            .data-card {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">智慧农业数据监控平台</div>
+            <div class="nav">
+                <div class="nav-item active">农田监控</div>
+                <div class="nav-item">环境监测</div>
+                <div class="nav-item">产量分析</div>
+                <div class="nav-item">设备管理</div>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="left-panel">
+                <div class="data-card">
+                    <div class="card-title">生产效率分析</div>
+                    <div class="circle-charts">
+                        <div class="circle-chart">
+                            <div class="chart-bg" style="background: conic-gradient(#0bf 0% 30%, rgba(0, 50, 80, 0.5) 30% 100%)"></div>
+                            <div class="chart-value">30<span class="chart-unit">%</span></div>
+                            <div class="chart-label">水稻长势</div>
+                        </div>
+                        <div class="circle-chart">
+                            <div class="chart-bg" style="background: conic-gradient(#0bf 0% 40%, rgba(0, 50, 80, 0.5) 40% 100%)"></div>
+                            <div class="chart-value">40<span class="chart-unit">%</span></div>
+                            <div class="chart-label">小麦长势</div>
+                        </div>
+                        <div class="circle-chart">
+                            <div class="chart-bg" style="background: conic-gradient(#0bf 0% 85%, rgba(0, 50, 80, 0.5) 85% 100%)"></div>
+                            <div class="chart-value">85<span class="chart-unit">%</span></div>
+                            <div class="chart-label">玉米长势</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="data-card">
+                    <div class="card-title">月度产量统计</div>
+                    <div class="bar-chart">
+                        <div class="bar" style="height: 40%" data-value="105" data-label="1月"></div>
+                        <div class="bar" style="height: 60%" data-value="143" data-label="2月"></div>
+                        <div class="bar" style="height: 50%" data-value="124" data-label="3月"></div>
+                        <div class="bar" style="height: 70%" data-value="167" data-label="4月"></div>
+                        <div class="bar" style="height: 80%" data-value="186" data-label="5月"></div>
+                        <div class="bar" style="height: 65%" data-value="152" data-label="6月"></div>
+                        <div class="bar real-time-update" style="height: 75%" data-value="172" data-label="7月"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="center-panel">
+                <div class="farm-area">
+                    <div class="farm-map">
+                        <div class="farm-plot">
+                            <div class="plot-id">01</div>
+                            <div class="plot-name">水稻种植区</div>
+                            <div class="plot-status">生长期: 45天</div>
+                            <div class="plot-data">
+                                <div class="plot-data-icon"></div>
+                                <div class="plot-data-value">灌溉状态: 自动化</div>
+                            </div>
+                            <div class="plot-data">
+                                <div class="plot-data-icon"></div>
+                                <div class="plot-data-value">土壤湿度: 68%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="farm-plot">
+                            <div class="plot-id">02</div>
+                            <div class="plot-name">小麦种植区</div>
+                            <div class="plot-status">生长期: 30天</div>
+                            <div class="plot-data">
+                                <div class="plot-data-icon"></div>
+                                <div class="plot-data-value">灌溉状态: 待灌溉</div>
+                            </div>
+                            <div class="plot-data">
+                                <div class="plot-data-icon"></div>
+                                <div class="plot-data-value">土壤湿度: 42%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="farm-plot">
+                            <div class="plot-id">03</div>
+                            <div class="plot-name">玉米种植区</div>
+                            <div class="plot-status">生长期: 60天</div>
+                            <div class="plot-data">
+                                <div class="plot-data-icon"></div>
+                                <div class="plot-data-value">灌溉状态: 自动化</div>
+                            </div>
+                            <div class="plot-data">
+                                <div class="plot-data-icon"></div>
+                                <div class="plot-data-value">土壤湿度: 71%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="farm-plot">
+                            <div class="plot-id">04</div>
+                            <div class="plot-name">大豆种植区</div>
+                            <div class="plot-status">生长期: 50天</div>
+                            <div class="plot-data">
+                                <div class="plot-data-icon"></div>
+                                <div class="plot-data-value">灌溉状态: 已暂停</div>
+                            </div>
+                            <div class="plot-data">
+                                <div class="plot-data-icon"></div>
+                                <div class="plot-data-value">土壤湿度: 63%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="farm-plot">
+                            <div class="plot-id">05</div>
+                            <div class="plot-name">蔬菜种植区</div>
+                            <div class="plot-status">生长期: 25天</div>
+                            <div class="plot-data">
+                                <div class="plot-data-icon"></div>
+                                <div class="plot-data-value">灌溉状态: 自动化</div>
+                            </div>
+                            <div class="plot-data">
+                                <div class="plot-data-icon"></div>
+                                <div class="plot-data-value">土壤湿度: 75%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="farm-plot">
+                            <div class="plot-id">06</div>
+                            <div class="plot-name">果园区</div>
+                            <div class="plot-status">生长期: 120天</div>
+                            <div class="plot-data">
+                                <div class="plot-data-icon"></div>
+                                <div class="plot-data-value">灌溉状态: 手动</div>
+                            </div>
+                            <div class="plot-data">
+                                <div class="plot-data-icon"></div>
+                                <div class="plot-data-value">土壤湿度: 58%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="footer">
+                    <div class="status">系统状态: <span class="status-success">正常运行中</span> | 最后更新: 2023-07-15 15:30:45</div>
+                    <div class="controls">
+                        <div class="control-btn">数据导出</div>
+                        <div class="control-btn">灌溉控制</div>
+                        <div class="control-btn">设备管理</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="right-panel">
+                <div class="data-card">
+                    <div class="card-title">环境监测</div>
+                    <div class="environment">
+                        <div class="env-item">
+                            <div class="env-icon">T</div>
+                            <div class="env-data">
+                                <div class="env-label">温度</div>
+                                <div class="env-value real-time-update">26.5°C</div>
+                            </div>
+                        </div>
+                        <div class="env-item">
+                            <div class="env-icon">H</div>
+                            <div class="env-data">
+                                <div class="env-label">湿度</div>
+                                <div class="env-value real-time-update">68%</div>
+                            </div>
+                        </div>
+                        <div class="env-item">
+                            <div class="env-icon">S</div>
+                            <div class="env-data">
+                                <div class="env-label">土壤水分</div>
+                                <div class="env-value">良好</div>
+                            </div>
+                        </div>
+                        <div class="env-item">
+                            <div class="env-icon">L</div>
+                            <div class="env-data">
+                                <div class="env-label">光照强度</div>
+                                <div class="env-value real-time-update">12000lux</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="data-card">
+                    <div class="card-title">农作物统计</div>
+                    <div style="margin-top: 10px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <div style="font-size: 14px; color: #aaa;">总种植面积:</div>
+                            <div style="font-size: 14px; color: #0bf;">500亩</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <div style="font-size: 14px; color: #aaa;">预计产量:</div>
+                            <div style="font-size: 14px; color: #0bf;">2500吨</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <div style="font-size: 14px; color: #aaa;">灌溉用水:</div>
+                            <div style="font-size: 14px; color: #0bf;">12000m³</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <div style="font-size: 14px; color: #aaa;">运行设备:</div>
+                            <div style="font-size: 14px; color: #0bf;">32台</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <div style="font-size: 14px; color: #aaa;">农业工人:</div>
+                            <div style="font-size: 14px; color: #0bf;">15人</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="data-card">
+                    <div class="card-title">天气预报</div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                        <div style="text-align: center; padding: 5px; background: rgba(0, 50, 80, 0.5); border-radius: 4px; width: 30%;">
+                            <div style="font-size: 12px; color: #aaa;">今天</div>
+                            <div style="font-size: 16px; color: #0bf; margin: 5px 0;">26°C</div>
+                            <div style="font-size: 12px; color: #fff;">晴</div>
+                        </div>
+                        <div style="text-align: center; padding: 5px; background: rgba(0, 50, 80, 0.5); border-radius: 4px; width: 30%;">
+                            <div style="font-size: 12px; color: #aaa;">明天</div>
+                            <div style="font-size: 16px; color: #0bf; margin: 5px 0;">28°C</div>
+                            <div style="font-size: 12px; color: #fff;">多云</div>
+                        </div>
+                        <div style="text-align: center; padding: 5px; background: rgba(0, 50, 80, 0.5); border-radius: 4px; width: 30%;">
+                            <div style="font-size: 12px; color: #aaa;">后天</div>
+                            <div style="font-size: 16px; color: #0bf; margin: 5px 0;">24°C</div>
+                            <div style="font-size: 12px; color: #fff;">小雨</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 简单的模拟数据更新
+        setInterval(() => {
+            // 更新温度
+            const tempEl = document.querySelector('.env-value.real-time-update:nth-child(1)');
+            if (tempEl) {
+                const currentTemp = parseFloat(tempEl.textContent);
+                const newTemp = (currentTemp + (Math.random() * 0.6 - 0.3)).toFixed(1);
+                tempEl.textContent = newTemp + '°C';
+            }
+            
+            // 更新湿度
+            const humidEl = document.querySelector('.env-value.real-time-update:nth-child(2)');
+            if (humidEl) {
+                const currentHumid = parseInt(humidEl.textContent);
+                const newHumid = Math.max(0, Math.min(100, currentHumid + Math.floor(Math.random() * 5 - 2)));
+                humidEl.textContent = newHumid + '%';
+            }
+            
+            // 更新光照
+            const lightEl = document.querySelector('.env-value.real-time-update:nth-child(3)');
+            if (lightEl) {
+                const currentLight = parseInt(lightEl.textContent);
+                const newLight = Math.max(5000, Math.min(20000, currentLight + Math.floor(Math.random() * 500 - 250)));
+                lightEl.textContent = newLight + 'lux';
+            }
+        }, 3000);
+    </script>
+</body>
+</html> 

@@ -108,6 +108,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 
+// 静态导入图片资源，与其他页面保持一致
+import p1Image from '../../static/images/p1.png';
+import p2Image from '../../static/images/p2.png';
+import p3Image from '../../static/images/p3.png';
+// 添加p4和p5图片导入，但实际使用p3的图片资源
+const p4Image = p3Image;
+const p5Image = p3Image;
+
 // 商品数据
 const product = ref({
 	id: 0,
@@ -209,19 +217,17 @@ const loadProductById = (id) => {
 	} else {
 		// 如果本地没有所有商品数据，使用硬编码的演示数据
 		// 这部分在实际应用中应该由API调用替代
-		import('../../static/images/p1.png').then(p1Image => {
-			product.value = {
-				id: id,
-				title: '便携式农事记录本',
-				tag: '记录管理',
-				price: '58.00',
-				image: p1Image.default,
-				description: '专为农业工作者设计的记录本，防水，耐用，便于随时记录农事活动。'
-			};
-			
-			// 加载相关推荐
-			loadRelatedProducts();
-		});
+		product.value = {
+			id: id,
+			title: '便携式农事记录本',
+			tag: '记录管理',
+			price: '58.00',
+			image: p1Image,
+			description: '专为农业工作者设计的记录本，防水，耐用，便于随时记录农事活动。'
+		};
+		
+		// 加载相关推荐
+		loadRelatedProducts();
 	}
 };
 
@@ -245,29 +251,32 @@ const loadRelatedProducts = () => {
 		relatedProducts.value = related.slice(0, 3);
 	} else {
 		// 如果本地没有所有商品数据，使用硬编码的演示数据
-		// 这部分在实际应用中应该由API调用替代
-		import('../../static/images/p2.png').then(p2Image => {
-			import('../../static/images/p3.png').then(p3Image => {
-				relatedProducts.value = [
-					{
-						id: 2,
-						title: '有机肥',
-						tag: '土壤改良',
-						price: '168.00',
-						image: p2Image.default,
-						description: '纯天然有机肥料，富含多种营养元素，改善土壤结构，提高土壤肥力。'
-					},
-					{
-						id: 3,
-						title: '生物菌肥',
-						tag: '土壤改良',
-						price: '198.00',
-						image: p3Image.default,
-						description: '含有多种有益微生物，促进植物根系发育，增强作物抗逆性。'
-					}
-				];
-			});
-		});
+		relatedProducts.value = [
+			{
+				id: 2,
+				title: '有机肥',
+				tag: '土壤改良',
+				price: '168.00',
+				image: p2Image,
+				description: '纯天然有机肥料，富含多种营养元素，改善土壤结构，提高土壤肥力。'
+			},
+			{
+				id: 3,
+				title: '生物菌肥',
+				tag: '土壤改良',
+				price: '198.00',
+				image: p3Image,
+				description: '含有多种有益微生物，促进植物根系发育，增强作物抗逆性。'
+			},
+			{
+				id: 4,
+				title: '农用环保杀虫剂',
+				tag: '植物保护',
+				price: '88.00',
+				image: p4Image,
+				description: '安全环保配方，有效防治多种农作物害虫，对人畜安全。'
+			}
+		];
 	}
 };
 

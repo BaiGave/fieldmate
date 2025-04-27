@@ -1,7 +1,40 @@
 <script>
+import api from './utils/api.js';
+
 export default {
   onLaunch: function () {
-    // 仅保留必要的初始化代码
+    // 初始化API模块
+    api.setApiMode('mock');  // 设置为模拟模式
+    api.init();  // 初始化API模块（创建默认用户等）
+    
+    console.log('应用启动初始化完成');
+    
+    // 检查是否需要自动创建管理员账户
+    try {
+      // 获取用户列表
+      let users = uni.getStorageSync('users') || [];
+      
+      // 如果没有用户，创建一个管理员用户
+      if (!users.length) {
+        const adminUser = {
+          id: 'admin-' + Date.now(),
+          username: 'admin',
+          phone: '13800138000',
+          password: 'admin123',
+          location: '北京市海淀区',
+          farmArea: 500,
+          createTime: Date.now(),
+          updateTime: Date.now(),
+          joinDate: new Date().toISOString().split('T')[0]
+        };
+        
+        users.push(adminUser);
+        uni.setStorageSync('users', users);
+        console.log('创建了默认管理员用户');
+      }
+    } catch (e) {
+      console.error('初始化用户数据失败:', e);
+    }
   }
 }
 </script>
