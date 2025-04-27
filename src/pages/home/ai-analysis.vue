@@ -108,6 +108,11 @@ const noResultAnimation = ref(null);
 
 // 生命周期钩子
 onMounted(() => {
+	// 确保使用真实后端API
+	api.setApiMode('real');
+	console.log('当前API模式:', api.getApiMode());
+	console.log('API基础URL:', api.getApiBaseUrl());
+	
 	playInitialAnimations();
 });
 
@@ -149,13 +154,20 @@ const analyzeImage = () => {
 	
 	console.log('开始分析图片:', imagePath.value);
 	
+	// 获取当前环境API基础URL
+	const apiBaseUrl = api.getApiBaseUrl();
+	console.log('当前API基础URL:', apiBaseUrl);
+	
+	// 确保使用真实后端API
+	api.setApiMode('real');
+	
 	// 调用API进行分析
 	api.analyzeCropImage({
 		imagePath: imagePath.value
 	}).then(result => {
 		uni.hideLoading();
 		console.log('分析结果:', result);
-		
+				
 		if (result.success) {
 			// 更新页面数据
 			const data = result.data;
@@ -169,9 +181,9 @@ const analyzeImage = () => {
 			
 			hasResult.value = true;
 			isAnalyzed.value = true;
-			
+	
 			console.log('分析成功，准备保存历史记录');
-			
+					
 			// 保存到历史记录
 			try {
 				const historyData = {
@@ -196,7 +208,7 @@ const analyzeImage = () => {
 			} catch (error) {
 				console.error('保存历史记录失败:', error);
 			}
-			
+					
 			// 播放结果动画
 			playResultAnimation();
 		} else {
@@ -223,14 +235,6 @@ const analyzeImage = () => {
 		uni.hideLoading();
 		console.error('分析图片失败:', err);
 		
-		// 在APP环境中，尝试使用模拟数据
-		// #ifdef APP-PLUS
-		console.log('APP环境下分析失败，使用模拟数据');
-		mockAnalysisResult();
-		// #endif
-		
-		// 非APP环境显示错误提示
-		// #ifndef APP-PLUS
 		uni.showToast({
 			title: '上传图片失败，请检查网络连接',
 			icon: 'none'
@@ -239,55 +243,6 @@ const analyzeImage = () => {
 		isAnalyzed.value = true;
 		hasResult.value = false;
 		playNoResultAnimation();
-		// #endif
-	});
-};
-
-// 添加用于APP环境的模拟分析结果函数
-const mockAnalysisResult = () => {
-	// 模拟分析结果
-	analysisTime.value = new Date().toLocaleString();
-	cropType.value = '水稻';
-	growthStage.value = '抽穗期';
-	healthStatus.value = '健康';
-	analysisDetail.value = '经AI分析，当前水稻处于抽穗期，整体生长状况良好，叶色浓绿，长势均匀，未发现明显病虫害迹象。';
-	suggestions.value = [
-		'继续保持现有管理方式',
-		'注意控制水分，保持稻田浅水层',
-		'预计20天后可以收获'
-	];
-	
-	hasResult.value = true;
-	isAnalyzed.value = true;
-	
-	console.log('使用模拟数据，准备保存历史记录');
-	
-	// 保存到历史记录
-	try {
-		const historyData = {
-			imagePath: imagePath.value || '/static/images/crops/rice.jpg', // 使用默认图片路径
-			analysisTime: analysisTime.value,
-			cropType: cropType.value,
-			growthStage: growthStage.value,
-			healthStatus: healthStatus.value,
-			analysisDetail: analysisDetail.value,
-			suggestions: suggestions.value
-		};
-		
-		console.log('保存的模拟历史数据:', historyData);
-		const saveResult = saveAnalysisHistory(historyData);
-		console.log('保存模拟历史记录结果:', saveResult ? '成功' : '失败');
-	} catch (error) {
-		console.error('保存模拟历史记录失败:', error);
-	}
-	
-	// 播放结果动画
-	playResultAnimation();
-	
-	// 显示提示
-	uni.showToast({
-		title: '分析完成',
-		icon: 'success'
 	});
 };
 

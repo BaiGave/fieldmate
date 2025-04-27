@@ -217,17 +217,17 @@ const loadProductById = (id) => {
 	} else {
 		// 如果本地没有所有商品数据，使用硬编码的演示数据
 		// 这部分在实际应用中应该由API调用替代
-		product.value = {
-			id: id,
-			title: '便携式农事记录本',
-			tag: '记录管理',
-			price: '58.00',
+			product.value = {
+				id: id,
+				title: '便携式农事记录本',
+				tag: '记录管理',
+				price: '58.00',
 			image: p1Image,
-			description: '专为农业工作者设计的记录本，防水，耐用，便于随时记录农事活动。'
-		};
-		
-		// 加载相关推荐
-		loadRelatedProducts();
+				description: '专为农业工作者设计的记录本，防水，耐用，便于随时记录农事活动。'
+			};
+			
+			// 加载相关推荐
+			loadRelatedProducts();
 	}
 };
 
@@ -251,22 +251,22 @@ const loadRelatedProducts = () => {
 		relatedProducts.value = related.slice(0, 3);
 	} else {
 		// 如果本地没有所有商品数据，使用硬编码的演示数据
-		relatedProducts.value = [
-			{
-				id: 2,
-				title: '有机肥',
-				tag: '土壤改良',
-				price: '168.00',
+				relatedProducts.value = [
+					{
+						id: 2,
+						title: '有机肥',
+						tag: '土壤改良',
+						price: '168.00',
 				image: p2Image,
-				description: '纯天然有机肥料，富含多种营养元素，改善土壤结构，提高土壤肥力。'
-			},
-			{
-				id: 3,
-				title: '生物菌肥',
-				tag: '土壤改良',
-				price: '198.00',
+						description: '纯天然有机肥料，富含多种营养元素，改善土壤结构，提高土壤肥力。'
+					},
+					{
+						id: 3,
+						title: '生物菌肥',
+						tag: '土壤改良',
+						price: '198.00',
 				image: p3Image,
-				description: '含有多种有益微生物，促进植物根系发育，增强作物抗逆性。'
+						description: '含有多种有益微生物，促进植物根系发育，增强作物抗逆性。'
 			},
 			{
 				id: 4,
@@ -275,8 +275,8 @@ const loadRelatedProducts = () => {
 				price: '88.00',
 				image: p4Image,
 				description: '安全环保配方，有效防治多种农作物害虫，对人畜安全。'
-			}
-		];
+					}
+				];
 	}
 };
 

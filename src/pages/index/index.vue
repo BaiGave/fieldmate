@@ -52,12 +52,12 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import api from '@/utils/api.js';
 
-// 确保使用模拟后端API
+// 设置API模式为真实后端
 onMounted(() => {
-	// 设置API模式为mock（模拟）
-	api.setApiMode('mock');
+	// 设置API模式为real（真实后端）
+	api.setApiMode('real');
 	
-	// 初始化API模块（确保默认用户创建等）
+	// 初始化API模块
 	api.init();
 	
 	// 查看是否已有token和用户信息，如果有，直接跳转到主页
@@ -71,17 +71,6 @@ onMounted(() => {
 		});
 		return;
 	}
-	
-	// 准备自动登录
-	// 填充默认用户名和密码
-	loginForm.username = 'admin';
-	loginForm.password = 'admin123';
-	
-	// 延迟执行自动登录，给UI和系统足够时间初始化
-	setTimeout(() => {
-		console.log('执行自动登录');
-		handleLogin();
-	}, 1500); // 增加延迟时间到1.5秒
 });
 
 // 登录表单数据
@@ -134,10 +123,7 @@ const handleLogin = async () => {
 	try {
 		console.log('开始登录流程', loginForm);
 		
-		// 确保先创建一个默认用户
-		await createDefaultUserIfNeeded();
-		
-		// 使用本地模拟API进行登录，而不是发送真实网络请求
+		// 使用真实API进行登录
 		const result = await api.login({
 			username: loginForm.username,
 			password: loginForm.password
@@ -178,81 +164,16 @@ const handleLogin = async () => {
 				title: result.message || '登录失败，请检查用户名和密码',
 				icon: 'none'
 			});
-			// 尝试直接登录
-			directLogin();
 		}
 	} catch (error) {
 		console.error('登录请求失败:', error);
 		uni.hideLoading();
 		loginStatus.isSubmitting = false;
 		
-		// 尝试直接登录
-		directLogin();
-	}
-};
-
-// 直接登录（出错时的备用方法）
-const directLogin = () => {
-	// 创建一个默认的用户信息
-	const userInfo = {
-		id: 'admin-' + Date.now(),
-		username: 'admin',
-		phone: '13800138000',
-		password: 'admin123',
-		location: '北京市海淀区',
-		farmArea: 500,
-		createTime: Date.now(),
-		updateTime: Date.now(),
-		joinDate: new Date().toISOString().split('T')[0]
-	};
-	
-	// 生成一个token
-	const token = 'local-token-' + Math.random().toString(36).substring(2);
-	
-	// 直接保存到本地存储
-	uni.setStorageSync('userInfo', userInfo);
-	uni.setStorageSync('token', token);
-	
-	// 显示成功消息
-	uni.showToast({
-		title: '登录成功',
-		icon: 'success',
-		duration: 1000
-	});
-	
-	// 跳转到首页
-	setTimeout(() => {
-		uni.reLaunch({
-			url: '/pages/home/home'
+		uni.showToast({
+			title: '登录失败，请稍后重试',
+			icon: 'none'
 		});
-	}, 1000);
-};
-
-// 确保默认用户存在
-const createDefaultUserIfNeeded = async () => {
-	try {
-		// 检查是否已有用户
-		const users = uni.getStorageSync('users') || [];
-		
-		// 如果没有admin用户，则创建一个
-		if (!users.find(u => u.username === 'admin')) {
-			const adminUser = {
-				id: 'admin-' + Date.now(),
-				username: 'admin',
-				phone: '13800138000',
-				password: 'admin123',
-				location: '北京市海淀区',
-				farmArea: 500,
-				createTime: Date.now(),
-				updateTime: Date.now(),
-				joinDate: new Date().toISOString().split('T')[0]
-			};
-			
-			users.push(adminUser);
-			uni.setStorageSync('users', users);
-		}
-	} catch (e) {
-		console.error('创建默认用户失败:', e);
 	}
 };
 

@@ -78,7 +78,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onUnmounted } from 'vue';
+import { ref, reactive, computed, onUnmounted, onMounted } from 'vue';
+import api from '@/utils/api.js';
+
+// 确保使用真实后端API
+onMounted(() => {
+	// 设置API模式为real（真实后端）
+	api.setApiMode('real');
+});
 
 // 注册表单数据
 const registerForm = reactive({
@@ -193,21 +200,14 @@ const handleRegister = async () => {
 	
 	try {
 		// 调用注册API
-		const response = await fetch('https://gwyixuidazse.sealosbja.site/auth/register', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				username: registerForm.username,
-				phone: registerForm.phone,
-				password: registerForm.password,
-				location: registerForm.location || '',
-				farmArea: registerForm.farmArea || '0'
-			})
+		const result = await api.register({
+			username: registerForm.username,
+			phone: registerForm.phone,
+			verificationCode: registerForm.verificationCode,
+			password: registerForm.password,
+			location: registerForm.location || '',
+			farmArea: registerForm.farmArea || '0'
 		});
-		
-		const result = await response.json();
 		
 		// 关闭加载
 		uni.hideLoading();
@@ -282,17 +282,9 @@ const sendVerificationCode = async () => {
 	
 	try {
 		// 调用发送验证码API
-		const response = await fetch('https://gwyixuidazse.sealosbja.site/auth/send-verification-code', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				phone: registerForm.phone
-			})
+		const result = await api.sendVerificationCode({
+			phone: registerForm.phone
 		});
-		
-		const result = await response.json();
 		
 		// 关闭加载
 		uni.hideLoading();
@@ -309,6 +301,11 @@ const sendVerificationCode = async () => {
 				title: '验证码已发送',
 				icon: 'success'
 			});
+			
+			// 在真实环境中显示验证码（仅用于开发）
+			if (result.data && result.data.code) {
+				console.log('验证码（仅供测试）:', result.data.code);
+			}
 		} else {
 			// 发送失败
 			uni.showToast({
