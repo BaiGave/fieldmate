@@ -168,32 +168,32 @@ const analyzeImage = () => {
 		uni.hideLoading();
 		console.log('分析结果:', result);
 				
-		if (result.success) {
-			// 更新页面数据
-			const data = result.data;
+				if (result.success) {
+					// 更新页面数据
+					const data = result.data;
+					
+					analysisTime.value = data.analysisTime;
+					cropType.value = data.cropType;
+					growthStage.value = data.growthStage;
+					healthStatus.value = data.healthStatus;
+					analysisDetail.value = data.analysisDetail;
+					suggestions.value = data.suggestions || [];
+					
+					hasResult.value = true;
+					isAnalyzed.value = true;
 			
-			analysisTime.value = data.analysisTime;
-			cropType.value = data.cropType;
-			growthStage.value = data.growthStage;
-			healthStatus.value = data.healthStatus;
-			analysisDetail.value = data.analysisDetail;
-			suggestions.value = data.suggestions || [];
-			
-			hasResult.value = true;
-			isAnalyzed.value = true;
-	
 			console.log('分析成功，准备保存历史记录');
 					
-			// 保存到历史记录
+					// 保存到历史记录
 			try {
 				const historyData = {
-					imagePath: imagePath.value,
-					analysisTime: analysisTime.value,
-					cropType: cropType.value,
-					growthStage: growthStage.value,
-					healthStatus: healthStatus.value,
-					analysisDetail: analysisDetail.value,
-					suggestions: suggestions.value
+						imagePath: imagePath.value,
+						analysisTime: analysisTime.value,
+						cropType: cropType.value,
+						growthStage: growthStage.value,
+						healthStatus: healthStatus.value,
+						analysisDetail: analysisDetail.value,
+						suggestions: suggestions.value
 				};
 				
 				console.log('保存的历史数据:', historyData);
@@ -209,40 +209,40 @@ const analyzeImage = () => {
 				console.error('保存历史记录失败:', error);
 			}
 					
-			// 播放结果动画
-			playResultAnimation();
-		} else {
-			// 分析失败的处理
+					// 播放结果动画
+					playResultAnimation();
+				} else {
+					// 分析失败的处理
 			console.error('分析失败:', result.message);
 			
-			if (result.code === 401) {
-				uni.showToast({
-					title: '请先登录',
-					icon: 'none'
-				});
-			} else {
-				uni.showToast({
-					title: result.message || '分析失败',
-					icon: 'none'
-				});
-				
-				isAnalyzed.value = true;
-				hasResult.value = false;
-				playNoResultAnimation();
-			}
-		}
+					if (result.code === 401) {
+						uni.showToast({
+							title: '请先登录',
+							icon: 'none'
+						});
+					} else {
+						uni.showToast({
+							title: result.message || '分析失败',
+							icon: 'none'
+						});
+						
+						isAnalyzed.value = true;
+						hasResult.value = false;
+						playNoResultAnimation();
+					}
+				}
 	}).catch(err => {
-		uni.hideLoading();
+			uni.hideLoading();
 		console.error('分析图片失败:', err);
 		
-		uni.showToast({
-			title: '上传图片失败，请检查网络连接',
-			icon: 'none'
-		});
-		
-		isAnalyzed.value = true;
-		hasResult.value = false;
-		playNoResultAnimation();
+			uni.showToast({
+				title: '上传图片失败，请检查网络连接',
+				icon: 'none'
+			});
+			
+			isAnalyzed.value = true;
+			hasResult.value = false;
+			playNoResultAnimation();
 	});
 };
 

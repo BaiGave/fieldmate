@@ -51,6 +51,7 @@ Authorization: Bearer <token>
 4. `camera_devices` - 摄像设备表
 5. `ai_detection_events` - AI检测事件表
 6. `crop_analysis` - 作物分析记录表
+7. `device_data` - 设备监测数据表
 
 详细的表结构设计请根据API返回数据格式自行拓展。
 
@@ -787,7 +788,166 @@ Authorization: Bearer <token>
   }
   ```
 
-## 7. 后端实现注意事项
+## 7. 设备监测相关API
+
+### 7.1 获取设备数据
+- **接口**: `/api/device/data`
+- **方法**: `GET`
+- **请求头**: 需要授权（Authorization）
+- **请求参数**: 无
+- **成功响应**:
+  ```json
+  {
+    "success": true,
+    "code": 200,
+    "message": "获取设备数据成功",
+    "data": {
+      "timestamp": 1717654321000,
+      "device": {
+        "id": "SS-farm01-1717654321",
+        "battery": 3.89,
+        "rssi": -67
+      },
+      "location": [39.904712, 116.405715],
+      "depth": 30,
+      "temperature": 24.3,
+      "moisture_vol": 28.5,
+      "moisture_kpa": 45,
+      "ph": 6.7,
+      "ec": 1250,
+      "salinity": 1.2,
+      "nitrogen": 62,
+      "phosphorus": 39,
+      "potassium": 178,
+      "organic_matter": 3.8,
+      "hardness": 1050,
+      "porosity": 38,
+      "bulk_density": 1.32,
+      "lead": 15,
+      "cadmium": 8,
+      "aluminum": 76,
+      "potassium_ion": 220
+    }
+  }
+  ```
+
+**备注**
+
+目前设备数据由后端模拟生成，不需要实际连接物理设备。首次访问时，系统会自动为用户创建一个虚拟设备和一些历史数据。每次请求时，可能会生成新的随机数据，模拟实时传感器读数。
+
+- **错误响应**:
+  ```json
+  {
+    "success": false,
+    "code": 401,
+    "message": "未登录",
+    "data": null
+  }
+  ```
+
+### 7.2 设置设备数据
+- **接口**: `/api/device/data`
+- **方法**: `POST`
+- **请求头**: 需要授权（Authorization）
+- **请求参数**:
+  ```json
+  {
+    "temperature": 25.0,
+    "moisture_vol": 30.0,
+    "ph": 6.5,
+    "ec": 1200
+    // 可根据需要设置其他参数
+  }
+  ```
+- **成功响应**:
+  ```json
+  {
+    "success": true,
+    "code": 200,
+    "message": "设置设备数据成功",
+    "data": {"success": true}
+  }
+  ```
+
+**备注**
+
+如果提交的数据中包含异常值（如pH值过高或过低、温度异常等），返回结果中会包含警告信息：
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "设置设备数据成功，检测到异常值",
+  "data": {
+    "success": true,
+    "alert": "pH值异常: 9.0，温度异常: 38.2°C"
+  }
+}
+```
+
+- **错误响应**:
+  ```json
+  {
+    "success": false,
+    "code": 401,
+    "message": "未登录",
+    "data": null
+  }
+  ```
+
+### 7.3 获取设备历史数据
+- **接口**: `/api/device/data/history`
+- **方法**: `GET`
+- **请求头**: 需要授权（Authorization）
+- **请求参数**: 
+  ```
+  startTime: 开始时间戳（可选）
+  endTime: 结束时间戳（可选）
+  page: 页码（可选，默认1）
+  pageSize: 每页数量（可选，默认10）
+  ```
+- **成功响应**:
+  ```json
+  {
+    "success": true,
+    "code": 200,
+    "message": "获取设备历史数据成功",
+    "data": {
+      "total": 100,
+      "page": 1,
+      "pageSize": 10,
+      "records": [
+        {
+          "timestamp": 1717654321000,
+          "temperature": 24.3,
+          "moisture_vol": 28.5,
+          "ph": 6.7,
+          "ec": 1250,
+          "location": [39.904712, 116.405715],
+          "depth": 30,
+          // 其他参数
+        },
+        // 更多历史记录
+      ]
+    }
+  }
+  ```
+
+**备注**
+
+第一次访问API时，系统会自动生成过去几天的历史数据（约20条记录），这些数据是随机生成的模拟传感器读数。可以使用startTime和endTime参数筛选特定时间范围内的数据。
+
+- **错误响应**:
+  ```json
+  {
+    "success": false,
+    "code": 401,
+    "message": "未登录",
+    "data": null
+  }
+  ```
+
+## 8. 后端实现注意事项
 
 1. 所有API端点必须实现CORS，确保与前端跨域通信
 2. 接口应实现访问频率限制，防止DOS攻击
@@ -798,3 +958,5 @@ Authorization: Bearer <token>
 7. 图片存储可考虑使用对象存储服务
 8. 作物智诊功能需要集成AI模型或调用第三方AI API
 9. 所有密码必须加密存储，推荐使用bcrypt
+10. 设备数据API应实现高频率访问的优化，考虑使用缓存
+11. 对于设备数据的异常值应有检测和告警机制

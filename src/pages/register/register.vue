@@ -201,12 +201,12 @@ const handleRegister = async () => {
 	try {
 		// 调用注册API
 		const result = await api.register({
-			username: registerForm.username,
-			phone: registerForm.phone,
+				username: registerForm.username,
+				phone: registerForm.phone,
 			verificationCode: registerForm.verificationCode,
-			password: registerForm.password,
-			location: registerForm.location || '',
-			farmArea: registerForm.farmArea || '0'
+				password: registerForm.password,
+				location: registerForm.location || '',
+				farmArea: registerForm.farmArea || '0'
 		});
 		
 		// 关闭加载
@@ -283,7 +283,7 @@ const sendVerificationCode = async () => {
 	try {
 		// 调用发送验证码API
 		const result = await api.sendVerificationCode({
-			phone: registerForm.phone
+				phone: registerForm.phone
 		});
 		
 		// 关闭加载

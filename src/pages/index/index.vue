@@ -123,7 +123,6 @@ const handleLogin = async () => {
 	try {
 		console.log('开始登录流程', loginForm);
 		
-		// 使用真实API进行登录
 		const result = await api.login({
 			username: loginForm.username,
 			password: loginForm.password
@@ -131,35 +130,45 @@ const handleLogin = async () => {
 		
 		console.log('登录结果:', result);
 		
-		// 关闭加载
 		uni.hideLoading();
 		loginStatus.isSubmitting = false;
 		
 		if (result.success) {
-			// 登录成功，保存用户信息和token
-			const { token, userInfo } = result.data;
-			
-			// 保存token到本地存储
-			uni.setStorageSync('token', token);
-			
-			// 保存用户信息
-			uni.setStorageSync('userInfo', userInfo);
-			
-			// 显示成功消息
+			// 登录成功，api.login内部已处理token和userInfo的存储
+			// const { token, userInfo } = result.data; // 不再需要从这里解构并手动存储
+			// uni.setStorageSync('token', token); // 已在api.login中处理
+			// uni.setStorageSync('userInfo', userInfo); // 已在api.login中处理
+
+			// 检查userInfo是否真的被获取和存储了
+			const storedUserInfo = uni.getStorageSync('userInfo');
+			if (!storedUserInfo) {
+				console.log('登录成功，但未获取到用户信息，尝试调用 getUserProfile');
+				try {
+					const profileResult = await api.getUserProfile();
+					if (profileResult && profileResult.success && profileResult.data) {
+						uni.setStorageSync('userInfo', JSON.stringify(profileResult.data));
+						console.log('用户信息已通过 getUserProfile 获取并存储:', profileResult.data);
+					} else {
+						console.warn('调用 getUserProfile 成功，但未返回有效用户信息。', profileResult);
+					}
+				} catch (profileError) {
+					console.error('调用 getUserProfile 失败:', profileError);
+					// 即使获取profile失败，也可能希望继续，因为token可能已设置
+				}
+			}
+
 			uni.showToast({
 				title: '登录成功',
 				icon: 'success',
 				duration: 1000
 			});
 			
-			// 跳转到首页
 			setTimeout(() => {
 				uni.reLaunch({
 					url: '/pages/home/home'
 				});
 			}, 1000);
 		} else {
-			// 登录失败
 			uni.showToast({
 				title: result.message || '登录失败，请检查用户名和密码',
 				icon: 'none'
@@ -171,7 +180,7 @@ const handleLogin = async () => {
 		loginStatus.isSubmitting = false;
 		
 		uni.showToast({
-			title: '登录失败，请稍后重试',
+			title: (error && error.message) || '登录失败，请稍后重试',
 			icon: 'none'
 		});
 	}

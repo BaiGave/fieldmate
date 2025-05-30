@@ -10,8 +10,8 @@
 		
 		<!-- 设备通知条 -->
 		<view class="device-notice">
-			<text class="notice-text">尚未接入物联网设备!</text>
-			<view class="connect-btn">联系客服</view>
+			<text class="notice-text">{{ deviceConnected ? '已接入物联网设备' : '尚未接入物联网设备!' }}</text>
+			<view class="connect-btn" @click="toggleDeviceSimulator">{{ deviceConnected ? '模拟中' : '联系客服' }}</view>
 		</view>
 		
 		<!-- 摄像头区域 -->
@@ -73,60 +73,60 @@
 				<view class="monitor-item">
 					<view class="item-header">
 						<text class="item-title">土壤温度</text>
-						<text class="item-value">--</text>
+						<text class="item-value">{{ deviceData ? deviceData.temperature.toFixed(1) : '--' }}</text>
 					</view>
 					<view class="item-unit">单位: ℃</view>
-					<view class="item-status">未接入传感器</view>
+					<view class="item-status">{{ deviceData ? '已接入传感器' : '未接入传感器' }}</view>
 				</view>
 				
 				<!-- 土壤湿度 -->
 				<view class="monitor-item">
 					<view class="item-header">
 						<text class="item-title">土壤湿度</text>
-						<text class="item-value">--</text>
+						<text class="item-value">{{ deviceData ? deviceData.moisture_vol.toFixed(1) : '--' }}</text>
 					</view>
 					<view class="item-unit">单位: %</view>
-					<view class="item-status">未接入传感器</view>
+					<view class="item-status">{{ deviceData ? '已接入传感器' : '未接入传感器' }}</view>
 				</view>
 				
 				<!-- 铅离子 -->
 				<view class="monitor-item">
 					<view class="item-header">
 						<text class="item-title">铅离子</text>
-						<text class="item-value">--</text>
+						<text class="item-value">{{ deviceData ? deviceData.lead : '--' }}</text>
 					</view>
 					<view class="item-unit">单位: ppb</view>
-					<view class="item-status">未接入传感器</view>
+					<view class="item-status">{{ deviceData ? '已接入传感器' : '未接入传感器' }}</view>
 				</view>
 				
 				<!-- 镉离子 -->
 				<view class="monitor-item">
 					<view class="item-header">
 						<text class="item-title">镉离子</text>
-						<text class="item-value">--</text>
+						<text class="item-value">{{ deviceData ? deviceData.cadmium : '--' }}</text>
 					</view>
 					<view class="item-unit">单位: ppb</view>
-					<view class="item-status">未接入传感器</view>
+					<view class="item-status">{{ deviceData ? '已接入传感器' : '未接入传感器' }}</view>
 				</view>
 				
 				<!-- 铝离子 -->
 				<view class="monitor-item">
 					<view class="item-header">
 						<text class="item-title">铝离子</text>
-						<text class="item-value">--</text>
+						<text class="item-value">{{ deviceData ? deviceData.aluminum : '--' }}</text>
 					</view>
 					<view class="item-unit">单位: ppb</view>
-					<view class="item-status">未接入传感器</view>
+					<view class="item-status">{{ deviceData ? '已接入传感器' : '未接入传感器' }}</view>
 				</view>
 				
 				<!-- 钾离子 -->
 				<view class="monitor-item">
 					<view class="item-header">
 						<text class="item-title">钾离子</text>
-						<text class="item-value">--</text>
+						<text class="item-value">{{ deviceData ? deviceData.potassium_ion : '--' }}</text>
 					</view>
 					<view class="item-unit">单位: ppb</view>
-					<view class="item-status">未接入传感器</view>
+					<view class="item-status">{{ deviceData ? '已接入传感器' : '未接入传感器' }}</view>
 				</view>
 			</view>
 			
@@ -141,6 +141,12 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue';
+import API from '@/utils/api.js';
+
+// 设备数据状态
+const deviceData = ref(null);
+const deviceConnected = ref(false);
+const deviceTimer = ref(null);
 
 const goBack = () => {
 	uni.reLaunch({
@@ -173,6 +179,73 @@ let aiInterval = null;
 // 切换后台检测
 const toggleDetection = () => {
 	detectionEnabled.value = !detectionEnabled.value;
+};
+
+// 获取设备数据
+const fetchDeviceData = async () => {
+	try {
+		const res = await API.getDeviceData();
+		if (res.success) {
+			deviceData.value = res.data;
+			deviceConnected.value = true;
+			// 更新AI检测内容
+			if (detectionEnabled.value && deviceData.value) {
+				const time = new Date().toLocaleTimeString();
+				let message = '';
+				// 根据设备数据生成AI检测事件
+				if (deviceData.value.temperature > 40) {
+					message = '土壤温度过高';
+				} else if (deviceData.value.temperature < 0) {
+					message = '土壤温度过低';
+				} else if (deviceData.value.moisture_vol < 20) {
+					message = '水源含量过低';
+				} else if (deviceData.value.lead > 80) {
+					message = '铅离子含量异常';
+				} else if (deviceData.value.potassium_ion < 100) {
+					message = '钾离子含量不足';
+				}
+				
+				if (message) {
+					const eventDesc = `${time}: ${message}`;
+					currentEvent.value = eventDesc;
+					newEventFlag.value = true;
+					setTimeout(() => { newEventFlag.value = false; }, 800);
+					aiEvents.value.unshift({ time, desc: eventDesc });
+				}
+			}
+		} else {
+			console.error('获取设备数据失败:', res.message);
+			deviceConnected.value = false;
+		}
+	} catch (error) {
+		console.error('获取设备数据异常:', error);
+		deviceConnected.value = false;
+	}
+};
+
+// 切换设备模拟器
+const toggleDeviceSimulator = () => {
+	if (deviceConnected.value) {
+		// 如果已连接，关闭模拟
+		if (deviceTimer.value) {
+			clearInterval(deviceTimer.value);
+			deviceTimer.value = null;
+		}
+		deviceData.value = null;
+		deviceConnected.value = false;
+		uni.showToast({
+			title: '已断开设备连接',
+			icon: 'none'
+		});
+	} else {
+		// 如果未连接，开始模拟
+		fetchDeviceData();
+		deviceTimer.value = setInterval(fetchDeviceData, 5000);
+		uni.showToast({
+			title: '正在模拟设备数据',
+			icon: 'none'
+		});
+	}
 };
 
 // 启动检测（持续随机事件生成）
@@ -371,7 +444,48 @@ function generatePlaceholderEvents(count = 5) {
 	return events;
 }
 
-// 监听返回键 - 修复退出键监听
+// 在页面卸载时清理监听器
+onUnmounted(() => {
+	// 确保恢复竖屏
+	if (isFullscreen.value) {
+		// #ifdef APP-PLUS
+		try {
+			plus.screen.lockOrientation('portrait');
+		} catch (e) {
+			console.error('恢复竖屏失败:', e);
+		}
+		// #endif
+	}
+	
+	// #ifdef APP-PLUS
+	// 移除返回键监听
+	try {
+		plus.key.removeEventListener('backbutton');
+	} catch (e) {
+		console.error('移除监听器失败:', e);
+	}
+	// #endif
+
+	// #ifdef H5
+	// 移除H5全屏监听
+	document.removeEventListener('fullscreenchange', handleFullscreenChange);
+	document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+	document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+	document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+	window.removeEventListener('orientationchange', checkOrientation);
+	// #endif
+
+	// 清理 AI 检测定时器
+	stopDetection();
+	
+	// 清理设备数据定时器
+	if (deviceTimer.value) {
+		clearInterval(deviceTimer.value);
+		deviceTimer.value = null;
+	}
+});
+
+// 监听物理返回键 - 修复退出键监听
 onMounted(() => {
 	// 页面加载动画
 	uni.showLoading({
@@ -379,14 +493,32 @@ onMounted(() => {
 		mask: true
 	});
 	
-	setTimeout(() => {
+	// 尝试获取设备数据
+	fetchDeviceData().then(() => {
+		uni.hideLoading();
+		if (deviceConnected.value) {
+			// 如果连接成功，设置轮询
+			deviceTimer.value = setInterval(fetchDeviceData, 5000);
+			uni.showToast({
+				title: '设备连接成功',
+				icon: 'none',
+				duration: 2000
+			});
+		} else {
+			uni.showToast({
+				title: '设备连接失败',
+				icon: 'none',
+				duration: 2000
+			});
+		}
+	}).catch(() => {
 		uni.hideLoading();
 		uni.showToast({
 			title: '设备连接失败',
 			icon: 'none',
 			duration: 2000
 		});
-	}, 1500);
+	});
 	
 	// 监听物理返回键
 	// #ifdef APP-PLUS
@@ -435,41 +567,6 @@ const handleFullscreenChange = () => {
 	}
 	// #endif
 };
-
-// 在页面卸载时清理监听器
-onUnmounted(() => {
-	// 确保恢复竖屏
-	if (isFullscreen.value) {
-		// #ifdef APP-PLUS
-		try {
-			plus.screen.lockOrientation('portrait');
-		} catch (e) {
-			console.error('恢复竖屏失败:', e);
-		}
-		// #endif
-	}
-	
-	// #ifdef APP-PLUS
-	// 移除返回键监听
-	try {
-		plus.key.removeEventListener('backbutton');
-	} catch (e) {
-		console.error('移除监听器失败:', e);
-	}
-	// #endif
-
-	// #ifdef H5
-	// 移除H5全屏监听
-	document.removeEventListener('fullscreenchange', handleFullscreenChange);
-	document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-	document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
-	document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
-	window.removeEventListener('orientationchange', checkOrientation);
-	// #endif
-
-	// 清理 AI 检测定时器
-	stopDetection();
-});
 
 // 处理拖拽开始
 const onDragStart = (e) => {
